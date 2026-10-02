@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Generated at runtime; auto-seeded from backend/test_data.json on first run.
+backend/data/db.json
