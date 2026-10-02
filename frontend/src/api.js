@@ -2,6 +2,8 @@
 // Relative paths are used so the Vite dev server proxy (see vite.config.js)
 // can forward them to the backend without hitting CORS.
 
+import { getToken } from "./auth";
+
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 class ApiError extends Error {
@@ -13,8 +15,14 @@ class ApiError extends Error {
 }
 
 async function request(path, options = {}) {
+  const token = getToken();
+
   const res = await fetch(`${BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
     ...options,
   });
 
@@ -42,13 +50,19 @@ function buildQuery(params = {}) {
 }
 
 export const api = {
-  getProjects: (filters) => request(`/projects${buildQuery(filters)}`),
-  getProject: (id) => request(`/projects/${id}`),
+  login: (email, password) =>
+    request("/api/login", { method: "POST", body: JSON.stringify({ email, password }) }),
+  logout: () => request("/api/logout", { method: "POST" }),
+  me: () => request("/api/me"),
+
+  getProjects: (filters) => request(`/api/projects${buildQuery(filters)}`),
+  getProject: (id) => request(`/api/projects/${id}`),
   createProject: (data) =>
-    request("/projects", { method: "POST", body: JSON.stringify(data) }),
+    request("/api/projects", { method: "POST", body: JSON.stringify(data) }),
   updateProject: (id, data) =>
-    request(`/projects/${id}`, { method: "PUT", body: JSON.stringify(data) }),
-  deleteProject: (id) => request(`/projects/${id}`, { method: "DELETE" }),
+    request(`/api/projects/${id}`, { method: "PUT", body: JSON.stringify(data) }),
+  deleteProject: (id) => request(`/api/projects/${id}`, { method: "DELETE" }),
+  restoreProject: (id) => request(`/api/projects/${id}/restore`, { method: "POST" }),
 };
 
 export { ApiError };
